@@ -1,0 +1,52 @@
+# Publishes the interactive tool to GitHub Pages.
+#
+# Pages serves the contents of `tool/` at the site root, so teachers can
+# launch the walk-through at <org>.github.io/<repo>/ without cloning or
+# downloading the file. The rest of the repo (guide, rubrics, skill, docs)
+# stays accessible via the GitHub UI and is not published as a site.
+#
+# Before this workflow runs successfully you must enable Pages once:
+#   Settings -> Pages -> Source: GitHub Actions
+#
+# After that, every push to main republishes the tool.
+
+name: Deploy tool to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tool/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload tool/ as Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./tool
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

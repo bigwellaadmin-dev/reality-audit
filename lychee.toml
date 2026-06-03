@@ -1,0 +1,38 @@
+# Lychee link-checker configuration.
+#
+# CI runs `lychee './**/*.md'` against every committed markdown file. Most
+# defaults are fine; the overrides below stop lychee from flagging links
+# that are correct but answer with non-200 status codes for legitimate
+# reasons (authentication walls, anti-bot 403s, transient rate limits).
+
+# Status codes treated as success. Defaults are 200-299; we add common
+# redirect codes and 403/429 which mean "the link works but lychee is not
+# allowed to fetch it." Both are normal for GitHub security pages and
+# CDN-fronted sites.
+accept = ["200..=299", "301..=308", "403", "429"]
+
+# Follow redirects (e.g. lowercase repo aliases, shortened URLs).
+max_redirects = 5
+
+# Be polite, retry once with a small backoff on transient errors.
+max_retries = 2
+retry_wait_time = 2
+
+# Send a real browser UA — some hosts (Cloudflare, Squarespace, etc.)
+# 403 anything that looks like a bot.
+user_agent = "Mozilla/5.0 (compatible; lychee-link-checker)"
+
+# Per-link timeout in seconds.
+timeout = 20
+
+# Skip mail addresses and any link that would resolve to the local host.
+exclude_mail = true
+exclude = [
+  # localhost / loopback
+  "^https?://(localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0)",
+  # The PVR URL 302-redirects to a GitHub login wall, which lychee
+  # cannot follow. The URL itself is correct.
+  "^https://github\\.com/bigwellaadmin-dev/reality-audit/security/advisories/new$",
+]
+
+include_verbatim = false

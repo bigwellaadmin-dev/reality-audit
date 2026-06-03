@@ -1,0 +1,66 @@
+# OpenSSF Scorecard.
+#
+# Scores this repo against ~20 supply-chain security best practices
+# (branch protection, signed releases, pinned dependencies, token
+# permissions, code review, vulnerability patching, etc.) and posts the
+# results to the Security tab as SARIF.
+#
+# The Scorecard badge in README.md reads its data from this run.
+#
+# Runs weekly so the badge stays current, and on every push to main so
+# a regression is caught as it lands.
+#
+# Reference: https://github.com/ossf/scorecard
+
+name: OpenSSF Scorecard
+
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: '32 7 * * 1'  # Mondays 07:32 UTC
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Top-level perms are minimal; the analysis job opts into the extras it needs.
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      # Upload SARIF to the Security tab.
+      security-events: write
+      # Read repo content + write the run ID badge.
+      id-token: write
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@05b42c624433fc40578a4040d5cf5e36ddca8cde # v2.4.2
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # Allow the action to publish results to the OpenSSF API so the
+          # README badge has data to render. If you would rather keep
+          # results private, set this to false and remove the badge.
+          publish_results: true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
+
+      - name: Upload to Security tab
+        uses: github/codeql-action/upload-sarif@4e828ff8d448a8a6e532957b1811f387a63867e8 # v3.29.4
+        with:
+          sarif_file: results.sarif

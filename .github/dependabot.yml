@@ -1,0 +1,31 @@
+# Dependabot configuration.
+#
+# This repo has no application dependencies (no package.json, requirements.txt,
+# go.mod, etc.) — only GitHub Actions used in CI. Dependabot watches the action
+# pins in .github/workflows/ and raises PRs when a new release ships, so the
+# SHAs in pages.yml, validate.yml, scorecard.yml, and codeql.yml do not go
+# stale.
+#
+# Schedule is weekly to keep noise low. Grouping is applied so all action
+# bumps in a given week arrive as a single PR.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Australia/Brisbane
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+      include: scope
+    labels:
+      - dependencies
+      - github-actions
+    groups:
+      actions:
+        patterns:
+          - "*"

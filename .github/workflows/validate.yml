@@ -1,0 +1,48 @@
+# Lightweight validation for a content-first repo.
+#
+#   1. Validates CITATION.cff against the Citation File Format schema, so
+#      the "Cite this repository" button on GitHub never breaks silently
+#      and external reference managers (Zotero, Zenodo) keep working.
+#   2. Checks every markdown link in the repo for 404s, so guide cross-
+#      references and the README links to docs/ stay live.
+#
+# Neither check requires committing dependencies or running a build. Both
+# are advisory on PRs — they will fail the run if broken, but they do not
+# auto-block merging unless branch protection is configured to require
+# them.
+
+name: Validate citation and links
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  cff:
+    name: Validate CITATION.cff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate CITATION.cff
+        uses: citation-file-format/cffconvert-github-action@4cf11baa70a673bfdf9dad0acc7ee33b3f4b6084 # v2.0.0
+        with:
+          args: "--validate"
+
+  links:
+    name: Check markdown links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lychee link checker
+        uses: lycheeverse/lychee-action@1d97d84f0bc547f7b25f4c2170d87d810dc2fb2c # v2.6.1
+        with:
+          # Configuration lives in lychee.toml at the repo root. Args here
+          # only point lychee at the markdown files to check; everything
+          # else (accepted status codes, retries, user agent, exclude list)
+          # is driven by the config so it stays auditable in one place.
+          args: >-
+            --no-progress
+            './**/*.md'
+          fail: true

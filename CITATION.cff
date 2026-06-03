@@ -1,0 +1,59 @@
+# Machine-readable citation file for the Reality Audit Framework.
+# Format: Citation File Format 1.2.0 — https://citation-file-format.github.io
+# Validated against the CFF schema before each release.
+
+cff-version: 1.2.0
+title: "Breaking the Loop: The Reality Audit Framework"
+message: "If you use Reality Audit in research, curriculum, or another publication, please cite it as below."
+type: software
+authors:
+  - family-names: Robinson
+    given-names: Sandra
+    affiliation: "Big Wella"
+    website: "https://bigwella.com"
+abstract: >-
+  Reality Audit is an AI-literacy framework for
+  secondary and adult learners and the people who teach them. It names a
+  four-stage loop — Intention, Interaction, Response, Reflection — and an
+  Academic Branch that verifies learning, giving teachers the practitioner
+  moves to keep students the pilot of their own thinking when AI is built to
+  agree with them. The framework is grounded in cognitive science (cognitive
+  offloading, productive struggle, metacognitive laziness, the illusion of
+  mastery), the documented tendency of AI systems toward sycophancy, and
+  Australian classroom equity research. The repository contains the full
+  Teacher Guide, two assessment rubrics (A–E and four-level), an interactive
+  walk-through tool for use alongside a teacher, and a Claude skill file.
+keywords:
+  - AI literacy
+  - generative AI in education
+  - AI sycophancy
+  - secondary education
+  - adult education
+  - lifelong learning
+  - Australian education
+  - metacognition
+  - productive struggle
+  - cognitive offloading
+  - critical thinking
+  - assessment
+  - teacher professional learning
+repository-code: "https://github.com/bigwellaadmin-dev/reality-audit"
+url: "https://github.com/bigwellaadmin-dev/reality-audit"
+license: CC-BY-4.0
+version: 1.0.0
+date-released: "2026-06-03"
+
+# Preferred citation for academic work — this is what gets used by the "Cite
+# this repository" button on GitHub, by Zotero, and by reference managers.
+preferred-citation:
+  type: report
+  title: "Breaking the Loop: The Reality Audit Framework — Teacher Guide"
+  authors:
+    - family-names: Robinson
+      given-names: Sandra
+      affiliation: "Big Wella"
+  year: 2026
+  institution:
+    name: "Big Wella"
+  url: "https://github.com/bigwellaadmin-dev/reality-audit"
+  license: CC-BY-4.0

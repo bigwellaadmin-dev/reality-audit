@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Reality Audit — a companion for thinking with AI that is built to agree with you.">
+  <meta name="author" content="Sandra Robinson · Big Wella">
+
+  <!--
+    Content Security Policy.
+      'unsafe-inline' for style-src and script-src is required because the
+      tool ships as a single file with inlined styles and JS. The trade-off
+      is deliberate: portability and offline use are the primary goals.
+      All third-party origins are excluded — fonts are self-hosted under
+      tool/fonts/ so the tool runs with no network requests after load.
+      frame-ancestors * permits embedding in an LMS (Moodle, Canvas).
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-ancestors *; base-uri 'none'; form-action 'none';">
+
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <title>Reality Audit — think with AI, not for it</title>
+
+  <style>
+    /* Self-hosted fonts, SIL Open Font Licence 1.1. DM Serif Display by
+       Colophon Foundry. Inter by Rasmus Andersson. See fonts/OFL.txt. */
+    @font-face {
+      font-family: 'DM Serif Display';
+      font-style: normal; font-weight: 400; font-display: swap;
+      src: url('fonts/dm-serif-display-400.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal; font-weight: 100 900; font-display: swap;
+      src: url('fonts/inter-latin.woff2') format('woff2');
+    }
+
+    :root {
+      --color-bg:      #fafaf8;
+      --color-surface: #f2f0ec;
+      --color-card:    #ffffff;
+      --color-border:  rgba(0,0,0,0.10);
+      --color-border-strong: rgba(0,0,0,0.18);
+      --color-text:    #1a1a1a;
+      --color-muted:   #5f5f5f;
+      --color-faint:   #b8b8b8;
+
+      /* Stage accents. Each passes WCAG AA (>= 4.5:1) on the cream bg so it
+         can safely carry small text. */
+      --c-intention:   #b5510a;  /* burnt orange */
+      --c-interaction: #0d6f8c;  /* cyan */
+      --c-response:    #6d28d9;  /* violet */
+      --c-reflection:  #a21caf;  /* magenta */
+      --c-academic:    #0f766e;  /* teal */
+
+      --warn:   #b42318;
+      --good:   #15803d;
+
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body:    'Inter', system-ui, -apple-system, sans-serif;
+
+      --sp-xs: 4px; --sp-sm: 8px; --sp-md: 16px; --sp-lg: 24px;
+      --sp-xl: 40px; --sp-2xl: 64px;
+      --radius: 14px;
+      --t: 200ms ease;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; font-family: var(--font-body); font-size: 16px;
+      line-height: 1.6; color: var(--color-text); background: var(--color-bg);
+      min-height: 100vh; -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    h1,h2,h3,p { margin: 0; font-weight: 400; }
+    button { font-family: inherit; cursor: pointer; background: none; border: none; padding: 0; color: inherit; }
+    textarea, input { font-family: inherit; font-size: 1rem; color: var(--color-text); }
+    :focus-visible { outline: 2px solid var(--color-text); outline-offset: 3px; border-radius: 4px; }
+    [hidden] { display: none !important; }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    .wrap { max-width: 760px; margin: 0 auto; padding: 0 var(--sp-lg); }
+
+    /* ---- Splash ---- */
+    .splash {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+      padding: var(--sp-xl) var(--sp-lg); gap: var(--sp-lg);
+    }
+    .splash__title {
+      font-family: var(--font-display); font-size: clamp(44px, 11vw, 96px);
+      line-height: 0.95; letter-spacing: -0.02em;
+      background: linear-gradient(120deg, var(--c-intention), var(--c-interaction) 40%, var(--c-response) 70%, var(--c-reflection));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .splash__sub { font-family: var(--font-display); font-size: clamp(20px, 4vw, 28px); color: var(--color-text); }
+    .splash__tag { max-width: 30em; color: var(--color-muted); font-size: 1.05rem; }
+    .btn-primary {
+      background: var(--color-text); color: var(--color-bg); padding: 14px 36px;
+      border-radius: 999px; font-weight: 600; font-size: 1.05rem; transition: opacity var(--t);
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .splash__attr { margin-top: var(--sp-lg); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-faint); }
+    .splash__link { font-size: 0.85rem; color: var(--color-muted); text-decoration: underline; text-underline-offset: 3px; }
+
+    /* ---- Header / phase indicator ---- */
+    header { position: sticky; top: 0; z-index: 10; background: var(--color-bg); border-bottom: 1px solid var(--color-border); }
+    .topbar { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+    /* Wordmark mirrors the splash title: same multi-stage gradient, clickable
+       to return to the start screen (responses are preserved for the session). */
+    .wordmark {
+      font-family: var(--font-display); font-size: 1.5rem; line-height: 1; letter-spacing: 0.01em;
+      background: linear-gradient(120deg, var(--c-intention), var(--c-interaction) 45%, var(--c-response) 75%, var(--c-reflection));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      transition: opacity var(--t);
+    }
+    .wordmark:hover { opacity: 0.7; }
+    .steps { display: flex; align-items: center; gap: var(--sp-xs); flex-wrap: wrap; }
+    .step-dot {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 999px; font-size: 0.8rem; font-weight: 700;
+      background: var(--color-surface); color: var(--color-muted); transition: all var(--t);
+    }
+    .step-dot[aria-current="true"] { color: #fff; }
+    .step-dot.done { background: var(--color-text); color: #fff; }
+
+    /* ---- Stage screen ---- */
+    main { padding: var(--sp-xl) 0 120px; }
+    .stage { animation: fade var(--t); }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    .stage__eyebrow { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
+    .stage__title { font-family: var(--font-display); font-size: clamp(34px, 7vw, 52px); line-height: 1.05; margin: var(--sp-xs) 0 var(--sp-md); }
+    .stage__one-liner { font-style: italic; font-size: 1.15rem; margin-bottom: var(--sp-lg); }
+    .callout-q {
+      display: flex; gap: var(--sp-sm); align-items: flex-start; padding: var(--sp-md) var(--sp-lg);
+      border-radius: var(--radius); font-weight: 600; margin-bottom: var(--sp-md);
+    }
+    .trap {
+      border: 1px solid rgba(180,35,24,0.25); background: rgba(180,35,24,0.05);
+      border-radius: var(--radius); padding: var(--sp-md) var(--sp-lg); margin-bottom: var(--sp-lg);
+    }
+    .trap__label { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--warn); }
+    .trap p { margin-top: var(--sp-xs); font-size: 0.95rem; }
+
+    .section-label { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-muted); margin: var(--sp-lg) 0 var(--sp-sm); }
+
+    /* selectable cards */
+    .choice {
+      display: block; width: 100%; text-align: left; padding: var(--sp-md) var(--sp-lg);
+      border: 1.5px solid var(--color-border); border-radius: var(--radius);
+      background: var(--color-card); margin-bottom: var(--sp-sm); transition: all var(--t);
+    }
+    .choice:hover { border-color: var(--color-border-strong); }
+    .choice[aria-pressed="true"] { border-width: 2px; }
+    .choice__head { display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-xs); }
+    .choice__tag { font-weight: 800; font-size: 0.85rem; }
+    .choice__label { font-weight: 600; font-size: 0.9rem; }
+    .choice p { font-size: 0.95rem; color: var(--color-text); }
+    .reveal { border-radius: var(--radius); padding: var(--sp-md) var(--sp-lg); margin: var(--sp-sm) 0 var(--sp-md); font-size: 0.95rem; }
+
+    /* stems */
+    .stem { display: flex; gap: var(--sp-md); align-items: flex-start; padding: var(--sp-md) var(--sp-lg); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); margin-bottom: var(--sp-sm); }
+    .stem p { font-style: italic; font-size: 0.95rem; }
+    .copy-btn { flex-shrink: 0; border: 1px solid var(--color-border-strong); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; transition: background var(--t); }
+    .copy-btn:hover { background: var(--color-surface); }
+
+    /* checklist */
+    .check { display: flex; gap: var(--sp-md); align-items: flex-start; width: 100%; text-align: left; padding: var(--sp-md) var(--sp-lg); border: 1.5px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); margin-bottom: var(--sp-sm); transition: all var(--t); }
+    .check[aria-pressed="true"] { border-width: 2px; }
+    .check__box { flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--color-faint); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; }
+
+    /* academic / rubric */
+    .acard { border: 1px solid rgba(15,118,110,0.25); background: rgba(15,118,110,0.05); border-radius: var(--radius); padding: var(--sp-md) var(--sp-lg); margin-bottom: var(--sp-sm); }
+    .acard h3 { font-weight: 700; font-size: 0.95rem; color: var(--c-academic); margin-bottom: var(--sp-xs); }
+    .acard p { font-size: 0.93rem; }
+    .rubric-row { border: 1px solid var(--color-border); border-radius: var(--radius); padding: var(--sp-md) var(--sp-lg); margin-bottom: var(--sp-sm); }
+    .rubric-row .lvl { font-weight: 800; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+    .rubric-row .out { font-weight: 700; font-size: 0.85rem; margin-top: 4px; }
+
+    /* guiding questions */
+    .gq { margin-bottom: var(--sp-md); }
+    .gq label { display: block; font-weight: 600; font-size: 0.95rem; margin-bottom: var(--sp-xs); }
+    .gq textarea { width: 100%; min-height: 70px; padding: var(--sp-sm) var(--sp-md); border: 1.5px solid var(--color-border); border-radius: 10px; background: var(--color-card); resize: vertical; line-height: 1.5; }
+    .gq textarea:focus-visible { outline: none; border-color: var(--color-text); }
+
+    .save-banner { font-size: 0.85rem; color: var(--color-muted); background: var(--color-surface); border-radius: 10px; padding: var(--sp-sm) var(--sp-md); margin: var(--sp-md) 0; }
+    .export-row { display: flex; gap: var(--sp-sm); flex-wrap: wrap; margin-top: var(--sp-md); }
+    .btn-export { background: var(--c-academic); color: #fff; padding: 12px 24px; border-radius: 999px; font-weight: 600; }
+    .btn-ghost { border: 1px solid var(--color-border-strong); padding: 12px 24px; border-radius: 999px; font-weight: 600; }
+    #copyStatus { font-size: 0.9rem; color: var(--good); margin-top: var(--sp-sm); min-height: 1.2em; }
+    #exportFallback { width: 100%; min-height: 160px; margin-top: var(--sp-sm); padding: var(--sp-md); border: 1.5px solid var(--color-border-strong); border-radius: 10px; font-family: ui-monospace, monospace; font-size: 0.8rem; }
+
+    /* nav */
+    .navbar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--color-bg); border-top: 1px solid var(--color-border); padding: var(--sp-sm) 0; z-index: 10; }
+    .navbar .wrap { display: flex; align-items: center; justify-content: space-between; }
+    .nav-btn { padding: 10px 22px; border-radius: 999px; font-weight: 600; border: 1px solid var(--color-border-strong); }
+    .nav-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+    .nav-next { color: #fff; border: none; }
+    .nav-count { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-muted); }
+
+    .noscript-msg { max-width: 40em; margin: 80px auto; padding: var(--sp-xl); text-align: center; }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+
+    @media print {
+      header, .navbar, .export-row, .save-banner, #exportFallback, .copy-btn, #copyStatus { display: none !important; }
+      .stage { display: block !important; page-break-after: always; }
+      body { background: #fff; color: #000; }
+      .choice, .stem, .check, .acard, .rubric-row { border-color: #000; background: #fff; }
+    }
+  </style>
+</head>
+<body>
+
+<noscript>
+  <div class="noscript-msg">
+    <h1 style="font-family:var(--font-display);font-size:40px">Reality Audit</h1>
+    <p>This companion needs JavaScript to run the loop. It stores nothing and sends nothing — JavaScript only drives the steps in your browser.</p>
+    <p>You can still use the framework on paper. Read the <a href="https://github.com/bigwellaadmin-dev/reality-audit">Teacher Guide →</a></p>
+  </div>
+</noscript>
+
+<!-- SPLASH -->
+<section class="splash" id="splash">
+  <h1 class="splash__title">Reality Audit</h1>
+  <p class="splash__sub">Agreement is not the same as truth.</p>
+  <p class="splash__tag">AI is built to agree with you. Walk the loop so it sharpens your thinking instead of softening it.</p>
+  <button class="btn-primary" id="beginBtn">Begin</button>
+  <p class="splash__attr">Sandra Robinson</p>
+  <a class="splash__link" href="https://github.com/bigwellaadmin-dev/reality-audit">Read the Teacher Guide →</a>
+</section>
+
+<!-- APP -->
+<div id="app" hidden>
+  <header>
+    <div class="wrap topbar">
+      <button type="button" class="wordmark" id="homeBtn" aria-label="Return to start screen">Reality Audit</button>
+      <nav class="steps" id="steps" aria-label="Reality Audit stages"></nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap" id="stageHost" aria-live="polite"></div>
+  </main>
+
+  <div class="navbar">
+    <div class="wrap">
+      <button class="nav-btn" id="prevBtn">Back</button>
+      <span class="nav-count" id="navCount"></span>
+      <button class="nav-btn nav-next" id="nextBtn">Next</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   Reality Audit companion — all state in memory, nothing persisted.
+   Rendering uses textContent only; no innerHTML, no HTML parsing.
+   ============================================================ */
+
+var STAGES = [
+  {
+    key: "intention", name: "Intention", subtitle: "Predictive Calibration", accent: "var(--c-intention)",
+    oneLiner: "The most dangerous moment is before you type. This is where you find out whether you came for the truth or for a cheerleader.",
+    question: "Am I here for the truth, or am I here for a cheerleader?",
+    trap: "If you open the AI while you're angry, stuck, or just wanting to be done, it will sense that and simply agree with you.",
+    interaction: "rag",
+    gqs: [
+      "What is my state right now — Red, Amber, or Green — and why?",
+      "Am I using AI because I want to learn, or because I want a yes-man?"
+    ]
+  },
+  {
+    key: "interaction", name: "Interaction", subtitle: "The Friction Protocol", accent: "var(--c-interaction)",
+    oneLiner: "Agreement is a red flag. This is where you forbid the AI from being polite.",
+    question: "Did I forbid the AI from being polite?",
+    trap: "If the AI agrees with you immediately, you haven't learned anything. Agreement is a red flag.",
+    interaction: "stems",
+    gqs: [
+      "Which Friction Stem did I use, and what did the AI push back on?",
+      "Did I argue with the answer, or just collect it?"
+    ]
+  },
+  {
+    key: "response", name: "Response", subtitle: "The Fluency Audit", accent: "var(--c-response)",
+    oneLiner: "Fluent prose feels like truth. This is where you audit your own reaction instead of the wording.",
+    question: "Do I feel Relief or Curiosity right now?",
+    trap: "Your emotional reaction tells you whether you're learning or being seduced by fluent language.",
+    interaction: "feeling",
+    gqs: [
+      "Where did the answer feel most comfortable — and did I check that part?",
+      "Did the AI push me somewhere new, or just agree more eloquently?"
+    ]
+  },
+  {
+    key: "reflection", name: "Reflection", subtitle: "Social Triangulation", accent: "var(--c-reflection)",
+    oneLiner: "An echo chamber of one feels like consensus. This is where you run the answer past a human who will disagree.",
+    question: "Does this advice hold up when a real human hears it?",
+    trap: "If the only thing that agrees with you is the machine built to agree with you, that is the finding.",
+    interaction: "checklist",
+    gqs: [
+      "Who is my Difficult Human, and what did they say that the AI didn't?"
+    ]
+  },
+  {
+    key: "academic", name: "Academic Branch", subtitle: "Prove You Learned It", accent: "var(--c-academic)",
+    oneLiner: "AI can make you feel like you understand something you don't. This is where you find out with the tool closed.",
+    question: "Can I do this with the AI closed?",
+    trap: "If you can't explain it on a blank page without the AI, you borrowed the understanding — you didn't earn it.",
+    interaction: "academic",
+    gqs: [
+      "What related problem could I solve right now without the AI open?",
+      "Which outside source confirmed the key claim?"
+    ]
+  }
+];
+
+var RAG = [
+  { level: "RED", label: "Lost / Overwhelmed", color: "var(--warn)",
+    desc: "“I don't know this — I am vulnerable to being misled.”",
+    guidance: "Use high scaffolding. Ask the AI to explain concepts step by step using simple analogies. Do NOT ask it for a final product yet." },
+  { level: "AMBER", label: "Partial Knowledge", color: "#b45309",
+    desc: "“I have some facts, but the logic is foggy.”",
+    guidance: "Ask the AI to act as a connector — have it link what you already know to the new concept. Challenge its explanations." },
+  { level: "GREEN", label: "Confident", color: "var(--good)",
+    desc: "“I know this well.” Tell the AI to challenge you, not praise you.",
+    guidance: "Use the AI as a devil's advocate. Ask it to find flaws in your thesis, argue against your position, or present counter-evidence." }
+];
+
+var STEMS = [
+  "I'm going to tell you my idea. Do not tell me it is ‘interesting’ or ‘creative.’ Find three logical flaws in my thinking.",
+  "Argue against me. Prove that my current perspective is one-sided.",
+  "What is the most uncomfortable truth about my current approach to this task?"
+];
+
+var FEELINGS = [
+  { name: "Relief", color: "var(--warn)",
+    desc: "“Phew, it said I'm right!” — You just got played. The AI told you what you wanted to hear and your brain switched off.",
+    follow: "Relief is the warning sign. Go back to Interaction and use a Friction Stem — make the AI argue against you before you accept this." },
+  { name: "Curiosity", color: "var(--good)",
+    desc: "“Wait, why did it say that?” — Now you're actually thinking. The AI pushed you somewhere new and your brain had to work.",
+    follow: "Curiosity is the signal that the work has started. Carry that question into Reflection." }
+];
+
+var REFLECT_ITEMS = [
+  "Share the AI's advice with a real human (teacher, parent, or friend).",
+  "Ask them: “Is the bot just being a Hype Man?”",
+  "If they disagree with the AI, explore why before accepting either view."
+];
+
+var ACADEMIC = [
+  { title: "The Near-Transfer Test", desc: "Solve a similar but different problem on a blank sheet of paper. If you can't explain the logic without the AI present, the learning didn't happen." },
+  { title: "The Triangulation Protocol", desc: "Find the AI's claim in a textbook, teacher resource, or primary source. No external confirmation, no completion." },
+  { title: "Document the Process", desc: "Your Interaction Log — the chat history showing how you challenged the AI — matters more than the polished output." }
+];
+
+var RUBRIC = [
+  { lvl: "Emerging", color: "#b45309", behaviour: "Takes what the AI says without questioning it. Feels Relief and stops thinking.", outcome: "You're in the Hype-Man Loop. The AI is doing the thinking for you.", outColor: "var(--warn)" },
+  { lvl: "Proficient", color: "var(--c-interaction)", behaviour: "Checks your state before starting. Uses Friction Stems. Notices Relief vs. Curiosity.", outcome: "You're breaking the loop. Your brain is still in the game.", outColor: "var(--good)" },
+  { lvl: "Advanced", color: "var(--c-response)", behaviour: "Checks AI claims against real sources. Can do the task without AI. Keeps a record of challenges.", outcome: "You're running the show. The AI works for you, not the other way around.", outColor: "var(--c-academic)" }
+];
+
+/* ---- state ---- */
+var state = {
+  current: 0,
+  rag: null,
+  feeling: null,
+  reflectChecks: [false, false, false],
+  answers: {} // key: stageKey + "_" + index
+};
+
+/* ---- helpers (textContent only) ---- */
+function el(tag, cls, text) {
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+var host = document.getElementById("stageHost");
+var stepsNav = document.getElementById("steps");
+var prevBtn = document.getElementById("prevBtn");
+var nextBtn = document.getElementById("nextBtn");
+var navCount = document.getElementById("navCount");
+
+function renderSteps() {
+  stepsNav.textContent = "";
+  STAGES.forEach(function (s, i) {
+    var b = el("button", "step-dot", String(i + 1));
+    if (i < state.current) { b.classList.add("done"); }
+    if (i === state.current) {
+      b.setAttribute("aria-current", "true");
+      b.style.background = s.accent;
+    }
+    b.setAttribute("aria-label", "Stage " + (i + 1) + ": " + s.name + (i < state.current ? " (done)" : ""));
+    b.addEventListener("click", function () { go(i); });
+    stepsNav.appendChild(b);
+  });
+}
+
+function gqBlock(stage) {
+  var frag = document.createDocumentFragment();
+  stage.gqs.forEach(function (q, i) {
+    var wrap = el("div", "gq");
+    var id = "gq_" + stage.key + "_" + i;
+    var lab = el("label", null, q); lab.setAttribute("for", id);
+    var ta = el("textarea");
+    ta.id = id;
+    ta.value = state.answers[stage.key + "_" + i] || "";
+    ta.addEventListener("input", function () { state.answers[stage.key + "_" + i] = ta.value; });
+    wrap.appendChild(lab); wrap.appendChild(ta);
+    frag.appendChild(wrap);
+  });
+  return frag;
+}
+
+function renderStage() {
+  var s = STAGES[state.current];
+  host.textContent = "";
+  var stage = el("section", "stage");
+  stage.setAttribute("aria-label", s.name + " — " + s.subtitle);
+
+  var eyebrow = el("p", "stage__eyebrow", s.subtitle); eyebrow.style.color = s.accent;
+  var title = el("h1", "stage__title", s.name);
+  var one = el("p", "stage__one-liner", s.oneLiner); one.style.color = s.accent;
+  stage.appendChild(eyebrow); stage.appendChild(title); stage.appendChild(one);
+
+  var cq = el("div", "callout-q");
+  cq.style.background = "color-mix(in srgb, " + s.accent + " 10%, transparent)";
+  cq.style.color = s.accent;
+  cq.appendChild(el("span", null, "“" + s.question + "”"));
+  stage.appendChild(cq);
+
+  var trap = el("div", "trap");
+  trap.appendChild(el("span", "trap__label", "The Hype-Man Trap"));
+  trap.appendChild(el("p", null, s.trap));
+  stage.appendChild(trap);
+
+  // stage-specific
+  if (s.interaction === "rag") stage.appendChild(ragBlock(s));
+  if (s.interaction === "stems") stage.appendChild(stemsBlock());
+  if (s.interaction === "feeling") stage.appendChild(feelingBlock());
+  if (s.interaction === "checklist") stage.appendChild(checklistBlock());
+  if (s.interaction === "academic") stage.appendChild(academicBlock());
+
+  stage.appendChild(el("p", "section-label", "In your own words"));
+  stage.appendChild(gqBlock(s));
+
+  if (s.interaction === "academic") stage.appendChild(exportBlock());
+
+  host.appendChild(stage);
+  host.focus && host.setAttribute("tabindex", "-1");
+
+  renderSteps();
+  prevBtn.disabled = state.current === 0;
+  nextBtn.textContent = state.current === STAGES.length - 1 ? "Done" : "Next";
+  nextBtn.style.background = s.accent;
+  navCount.textContent = "Stage " + (state.current + 1) + " of " + STAGES.length;
+}
+
+function ragBlock(s) {
+  var f = document.createDocumentFragment();
+  f.appendChild(el("p", "section-label", "Declare your state before you start"));
+  var reveal = el("div", "reveal"); reveal.hidden = true;
+  RAG.forEach(function (r) {
+    var b = el("button", "choice");
+    b.setAttribute("aria-pressed", state.rag === r.level ? "true" : "false");
+    if (state.rag === r.level) b.style.borderColor = r.color;
+    var head = el("div", "choice__head");
+    var tag = el("span", "choice__tag", r.level); tag.style.color = r.color;
+    head.appendChild(tag);
+    head.appendChild(el("span", "choice__label", r.label));
+    b.appendChild(head);
+    b.appendChild(el("p", null, r.desc));
+    b.addEventListener("click", function () {
+      state.rag = (state.rag === r.level) ? null : r.level;
+      renderStage();
+    });
+    f.appendChild(b);
+  });
+  if (state.rag) {
+    var r = RAG.filter(function (x) { return x.level === state.rag; })[0];
+    reveal.hidden = false;
+    reveal.style.background = "color-mix(in srgb, " + r.color + " 10%, transparent)";
+    reveal.appendChild(el("strong", null, "Your guidance: "));
+    reveal.appendChild(document.createTextNode(r.guidance));
+    f.appendChild(reveal);
+  }
+  return f;
+}
+
+function stemsBlock() {
+  var f = document.createDocumentFragment();
+  f.appendChild(el("p", "section-label", "Copy these to force the AI into friction"));
+  STEMS.forEach(function (text) {
+    var row = el("div", "stem");
+    row.appendChild(el("p", null, "“" + text + "”"));
+    var btn = el("button", "copy-btn", "Copy");
+    btn.setAttribute("aria-label", "Copy this Friction Stem");
+    btn.addEventListener("click", function () { copyText(text, btn); });
+    row.appendChild(btn);
+    f.appendChild(row);
+  });
+  return f;
+}
+
+function feelingBlock() {
+  var f = document.createDocumentFragment();
+  f.appendChild(el("p", "section-label", "After reading the AI's response, what do you feel?"));
+  var reveal = el("div", "reveal"); reveal.hidden = true;
+  FEELINGS.forEach(function (fe) {
+    var b = el("button", "choice");
+    b.setAttribute("aria-pressed", state.feeling === fe.name ? "true" : "false");
+    if (state.feeling === fe.name) b.style.borderColor = fe.color;
+    var head = el("div", "choice__head");
+    var tag = el("span", "choice__tag", fe.name); tag.style.color = fe.color;
+    head.appendChild(tag);
+    b.appendChild(head);
+    b.appendChild(el("p", null, fe.desc));
+    b.addEventListener("click", function () {
+      state.feeling = (state.feeling === fe.name) ? null : fe.name;
+      renderStage();
+    });
+    f.appendChild(b);
+  });
+  if (state.feeling) {
+    var fe = FEELINGS.filter(function (x) { return x.name === state.feeling; })[0];
+    reveal.hidden = false;
+    reveal.style.background = "color-mix(in srgb, " + fe.color + " 10%, transparent)";
+    reveal.textContent = fe.follow;
+    f.appendChild(reveal);
+  }
+  return f;
+}
+
+function checklistBlock() {
+  var f = document.createDocumentFragment();
+  f.appendChild(el("p", "section-label", "Your action checklist"));
+  REFLECT_ITEMS.forEach(function (item, i) {
+    var b = el("button", "check");
+    var on = state.reflectChecks[i];
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    if (on) b.style.borderColor = "var(--c-reflection)";
+    var box = el("span", "check__box", on ? "✓" : "");
+    if (on) box.style.background = "var(--c-reflection)";
+    if (on) box.style.borderColor = "var(--c-reflection)";
+    b.appendChild(box);
+    b.appendChild(el("span", null, item));
+    b.addEventListener("click", function () {
+      state.reflectChecks[i] = !state.reflectChecks[i];
+      renderStage();
+    });
+    f.appendChild(b);
+  });
+  return f;
+}
+
+function academicBlock() {
+  var f = document.createDocumentFragment();
+  f.appendChild(el("p", "section-label", "Three checks to prove real learning"));
+  ACADEMIC.forEach(function (a) {
+    var c = el("div", "acard");
+    c.appendChild(el("h3", null, a.title));
+    c.appendChild(el("p", null, a.desc));
+    f.appendChild(c);
+  });
+  f.appendChild(el("p", "section-label", "Where are you?"));
+  RUBRIC.forEach(function (r) {
+    var row = el("div", "rubric-row"); row.style.borderColor = "color-mix(in srgb, " + r.color + " 35%, transparent)";
+    var lvl = el("span", "lvl", r.lvl); lvl.style.color = r.color;
+    row.appendChild(lvl);
+    row.appendChild(el("p", null, r.behaviour));
+    var out = el("p", "out", r.outcome); out.style.color = r.outColor;
+    row.appendChild(out);
+    f.appendChild(row);
+  });
+  return f;
+}
+
+function exportBlock() {
+  var f = document.createDocumentFragment();
+  f.appendChild(el("div", "save-banner", "Your responses are not saved — export before closing."));
+  var row = el("div", "export-row");
+  var exp = el("button", "btn-export", "Export Reality Audit Log");
+  exp.addEventListener("click", doExport);
+  var pr = el("button", "btn-ghost", "Print");
+  pr.addEventListener("click", function () { window.print(); });
+  row.appendChild(exp); row.appendChild(pr);
+  f.appendChild(row);
+  var status = el("p"); status.id = "copyStatus"; status.setAttribute("role", "status");
+  f.appendChild(status);
+  var ta = el("textarea"); ta.id = "exportFallback"; ta.hidden = true; ta.setAttribute("aria-label", "Loop log text to copy manually");
+  f.appendChild(ta);
+  return f;
+}
+
+/* ---- clipboard ---- */
+function copyText(text, btn) {
+  function ok() { if (btn) { var o = btn.textContent; btn.textContent = "Copied"; setTimeout(function () { btn.textContent = o; }, 1500); } }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok, function () { manualCopy(text); });
+  } else { manualCopy(text); }
+}
+function manualCopy(text) {
+  var ta = document.getElementById("exportFallback");
+  if (!ta) { window.prompt("Copy with ⌘C / Ctrl-C:", text); return; }
+  ta.hidden = false; ta.value = text; ta.focus(); ta.select();
+  var st = document.getElementById("copyStatus");
+  if (st) st.textContent = "Select the text above and copy with ⌘C / Ctrl-C.";
+}
+
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+function stamp() {
+  var d = new Date();
+  return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear() + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+
+function buildLog() {
+  var lines = ["Reality Audit Log — " + stamp(), ""];
+  STAGES.forEach(function (s) {
+    lines.push("== " + s.name + " — " + s.subtitle + " ==");
+    if (s.key === "intention" && state.rag) lines.push("State declared: " + state.rag);
+    if (s.key === "interaction") lines.push("Friction Stems available (use at least one).");
+    if (s.key === "response" && state.feeling) lines.push("Reaction: " + state.feeling);
+    if (s.key === "reflection") {
+      REFLECT_ITEMS.forEach(function (it, i) { lines.push((state.reflectChecks[i] ? "[x] " : "[ ] ") + it); });
+    }
+    s.gqs.forEach(function (q, i) {
+      lines.push("Q: " + q);
+      lines.push("A: " + (state.answers[s.key + "_" + i] || "(no response)"));
+    });
+    lines.push("");
+  });
+  lines.push("— Generated by the Reality Audit companion · bigwellaadmin-dev/reality-audit · CC BY 4.0");
+  return lines.join("\n");
+}
+
+function doExport() {
+  var text = buildLog();
+  var st = document.getElementById("copyStatus");
+  function ok() { if (st) st.textContent = "Copied — paste into your LMS or email to your teacher."; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok, function () { manualCopy(text); });
+  } else { manualCopy(text); }
+}
+
+/* ---- nav ---- */
+function go(i) {
+  if (i < 0 || i >= STAGES.length) return;
+  state.current = i;
+  renderStage();
+  window.scrollTo(0, 0);
+}
+prevBtn.addEventListener("click", function () { go(state.current - 1); });
+nextBtn.addEventListener("click", function () { if (state.current < STAGES.length - 1) go(state.current + 1); });
+
+document.getElementById("beginBtn").addEventListener("click", function () {
+  document.getElementById("splash").hidden = true;
+  document.getElementById("app").hidden = false;
+  renderStage();
+});
+
+/* Wordmark returns to the start screen. Responses persist for the session,
+   so "Begin" resumes at the stage the learner left. */
+document.getElementById("homeBtn").addEventListener("click", function () {
+  document.getElementById("app").hidden = true;
+  document.getElementById("splash").hidden = false;
+  window.scrollTo(0, 0);
+});
+</script>
+</body>
+</html>
