@@ -26,7 +26,6 @@ user_agent = "Mozilla/5.0 (compatible; lychee-link-checker)"
 timeout = 20
 
 # Skip mail addresses and any link that would resolve to the local host.
-exclude_mail = true
 exclude = [
   # localhost / loopback
   "^https?://(localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0)",
